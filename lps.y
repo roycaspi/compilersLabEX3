@@ -4,6 +4,16 @@
 #include <string.h>
 #include <malloc.h>
 
+_ID getId(char* id);
+_NUM getNumber(char* num);
+void addToList(char *newID);
+bool updateListInt(char *existingID, float val);
+bool updateListFloat(char *existingID, float val);
+bool isInteger(char* num);
+Node* find(char* id);
+void put(char* id);
+void get(char* id);
+void assign(char* id, char* exp);
 char* getOutputFileName(char* fileName, char* extension);
 int yyerror(char* s);
 void ourError(char* s);
