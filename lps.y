@@ -12,40 +12,76 @@ extern FILE *yyin;
 extern FILE *yyout;
 extern int lines;
 extern char *yytext;
+typedef struct {
+	int length;
+	char val[20];
+} _ID
+typedef struct {
+	char* type = "INT";
+	int val;
+} _INT;
+typedef struct {
+	char* type = "REAL";
+	float val;
+} _REAL;
+union {
+	char type[4];
+	_INT integerVal;
+	_REAL floatVal;
+}_NUM;
+typedef struct {
+    _ID id;
+    _NUM val;
+    struct Node* next;
+}Node;
+
+Node* head = NULL;
 %}
 
-%token DOT COMA LP RP COLON SEMICOL NUMBER ID WS RELOP WHILE IF ELSE START DO INT ENDI ENDP PUT PROG GET REAL LOOP THEN VAR ENDL UNTIL LT GT NE EQ
+%union {
+    _ID id;
+    _NUM num;
+    char op[6];
+}
+
+%token 		DOT COMA LP RP COLON SEMICOL WS WHILE IF ELSE START DO INT ENDI ENDP PUT PROG GET REAL LOOP THEN VAR ENDL UNTIL
+%token <num>	NUMBER 			// all tokens with num value
+%token <id> 	ID			// id values
+%token <op> 	RELOP LT GT NE EQ	// operations
+
 %left ADDOP MULOP
 %right ASSIGNOP LOGOP
 
+%type <op> boolExp statement expression term factor type
+
 %%
-program: programStart declarations START stmtList ENDP fixDotIssue {return 0;}
-| error {ourError("Error in program");}
+program: programStart declarations START error {ourError("'Start' is missing after variable declarations ");} stmtList ENDP error {ourError("Endp is missing after after statements ");} fixDotIssue {return 0;}
+	| error {ourError("Error in program");}
 ;
 fixDotIssue:  DOT
-             | error {ourError("Could not find DOT after ENDP");}
+             | error {ourError(". is missing after ENDP");}
 ;
 programStart: PROG ID SEMICOL
-| error  {ourError("Program should start with 'prog ID ;'");}
+	| error  {ourError("Program should start with prog ID ;");}
 ;
-declarations: VAR declList SEMICOL  {}
-| error  {ourError("Declerations list should start with 'var' and end with ';'");}
+declarations: VAR declList SEMICOL
+	| error  {ourError("Declerations list should start with 'var' and end with ';'");}
 ;
 declList: declList COMA ID COLON type
 			| ID COLON type
-| error  {ourError("Each declaration should be in format ID:Type (seperated with ',')");}
+	| error  {ourError("Each declaration should be in format ID:Type (seperated with ',')");}
 ;
 type:  INT  
 	|  REAL 
-| error  {ourError("Type should be 'int' or 'real'");}
+	| error  {ourError("Type should be 'int' or 'real'");}
 ;
-stmtList: statement SEMICOL stmtList
+stmtList: statement SEMICOL | error {ourError("';' is missing");} stmtList
 			| /* empty string */
 			| error {ourError("stmtList is invalid, each statment must end with ';' ");}
 ;
-statement: ID ASSIGNOP expression
-			| PUT expression
-			| GET ID
+statement: ID ASSIGNOP expression {assign($1, $3)}
+			| PUT expression {put($2)}
+			| GET ID {get($2)}
 			| IF boolExp THEN stmtList ELSE stmtList ENDI
 			| IF boolExp THEN stmtList  ENDI
 			| LOOP boolExp DO stmtList ENDL
@@ -53,19 +89,29 @@ statement: ID ASSIGNOP expression
 			| error {ourError("invalid statement\n");}
 ;
 boolExp: expression case expression
+	| expression '<' expression {$$ = $1 < $3;}
+	| expression '>' expression {$$ = $1 < $3;}
+	| expression '<>' expression {$$ = $1 != $3;}
+	| expression '&' expression {$$ = $1 && $3;}
+	| expression '~' expression {$$ = $1 == $3;} //don't understand what ~ means
+	| expression '!' expression {$$ = $1 || $3;}
 ;
 case: RELOP 
 	| LOGOP
 ;
-expression: expression ADDOP term  
+expression: 	expression '+' term {$$ = $1 + $3;}
+		|  expression '-' term {$$ = $1 - $3;}
 		|  term
 ;
-term: term MULOP factor 
-		| factor
+term: 	term '*' factor {$$ = $1 * $3;}
+ 	| term '/' factor {$$ = $1 / $3}
+ 	| term 'mod' factor {$$ = $1 % $3}
+	| factor {$$ = $2;}
 ;
-factor: ID
-	|  NUMBER
-	|  '('expression')'
+factor: ID {$$ = getId($1); }
+		|  NUMBER { $$ = getNumber($1); }
+	|  '('expression')' {$$ = $2;}
+	| error                 { ourError("");}
 ;
 
 %%
@@ -118,6 +164,108 @@ char* getOutputFileName(char* fileName, char* extension){
 	while(*extension != 0) *outputNameRunner++ = *extension++;
 	*outputNameRunner = 0;
 	return outputName;
+}
+
+_NUM getNumber(char* num) {
+	_NUM n;
+	if(!isInteger(num)) {
+	    n.type = "REAL"
+	    n.floatVal = atof($1);
+	    return n;
+	}
+	n.type = "INT"
+	n.intVal = atoi($1);
+	return n;
+}
+
+_ID getId(char* id) {
+	_ID newId;
+	id.length = strlen(id);
+	newId.val = id;
+	return newId;
+}
+
+void addToList(char *newID) {
+    Node* curr = head;
+    while (curr != NULL) {
+        curr = curr->next
+    }
+    curr = (struct Node*)malloc(sizeof(struct Node));
+    curr->id->val = newID;
+    curr->id->length = strlen(newID);
+}
+
+bool updateListInt(char *existingID, int val) { //returns false if id doesn't exist in list
+    Node* curr = head;
+    while (curr != NULL) {
+    	if(strcmp(curr->id.val, existingID) {
+    		curr->val.integerVal = val;
+    	}
+        curr = curr->next
+        return true;
+    }
+    return false;
+}
+
+bool updateListFloat(char *existingID, float val) {
+    Node* curr = head;
+    while (curr != NULL) {
+    	if(strcmp(curr->id.val, existingID) {
+    		curr->val.floatVal = val;
+    	}
+        curr = curr->next
+        return true;
+    }
+    return false;
+}
+bool isInteger(char* num) {
+	for(int i = 0; i < strlen(num); i++) { //check if integer or float
+		if(num[i] == '.'){
+		    return false;
+		}
+        }
+        return true;
+}
+Node* find(char* id){
+	Node* curr = head;
+	while (curr != NULL) {
+		if(strcmp(curr->id.val, id) {
+			return curr;
+		}
+		curr = curr->next
+    	}
+    	return NULL;
+}
+void put(char* id){
+	Node* temp = find(id);
+	if(temp==NULL){
+		ourError("%s does not exist", id)};
+	}
+	else{
+		(strcmp(temp->val.type, "INT"))?print("%d", temp->integerVal.val): print("%d", temp->floatVal.val);
+	}
+}
+void get(char* id){
+	Node* temp = find(id);
+	if(temp==NULL){
+		ourError("%s does not exist", id)};
+	}
+	else{
+		strcmp(temp->type == "INT")? temp->val.integerVal = 1: temp->val.floatVal = 1.0;
+	}
+}
+void assign(char* id, char* exp){
+	if(isInteger(exp)){
+		if(!updateListInt(id,exp)){
+			ourError("%s already exists, id")
+		}
+	}else
+	{
+		if(!updateListFloat(id,exp))
+		{
+			ourError("%s already exists, id")
+		}
+	}
 }
 
 
