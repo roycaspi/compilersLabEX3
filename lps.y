@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <stdbool.h>
 
 logop(YYSTYPE val1, char* op, YYSTYPE val2);
 relop(YYSTYPE val1, char* op, YYSTYPE val2);
@@ -46,6 +47,7 @@ Node* head = NULL;
     _ID id;
     _NUM num;
     char op[6];
+    bool boolean;
 }
 
 %token 		DOT COMA LP RP COLON SEMICOL WS WHILE IF ELSE START DO INT ENDI ENDP PUT PROG GET REAL LOOP THEN VAR ENDL UNTIL
@@ -56,45 +58,51 @@ Node* head = NULL;
 %left ADDOP MULOP
 %right ASSIGNOP LOGOP
 
-%type <op> boolExp statement expression term factor type //todo:fix
+%type <op> type
+%type <boolean> boolExp
+%type <num> factor expression term
 
 %%
-program: programStart declarations START stmtList ENDP fixDotIssue {return 0;}
-	| programStart declarations START stmtList error {ourError("'Endp' is missing after statements ");}
-	| programStart declarations error {ourError("'Start' is missing after variable declarations ");}
-	| error {ourError("Error in program");}
+program: PROG ID SEMICOL declarations START stmtList ENDP DOT {return 0;}
+	| PROG ID SEMICOL declarations START stmtList ENDP error {ourError(". is missing after ENDP");}
+	| PROG ID SEMICOL declarations START stmtList error {ourError("'Endp' is missing after statements ");}
+	| PROG ID SEMICOL declarations error {ourError("'Start' is missing after variable declarations ");}
+	| PROG ID error  {ourError("Program should end with ';'");}
+	| PROG error  {ourError("invalid program ID name");}
+	| error  {ourError("Program should start with prog");}
 ;
-fixDotIssue:  DOT
-             | error {ourError(". is missing after ENDP");}
-;
-programStart: 	PROG ID SEMICOL
-		| PROG ID error  {ourError("Program should end with ';'");}
-		| PROG error  {ourError("invalid program ID name");}
-		| error  {ourError("Program should start with prog");}
-;
+//fixDotIssue:  DOT
+//             | error {ourError(". is missing after ENDP");}
+//;
+//programStart: 	PROG ID SEMICOL
+//		| PROG ID error  {ourError("Program should end with ';'");}
+//		| PROG error  {ourError("invalid program ID name");}
+//		| error  {ourError("Program should start with prog");}
+//;
 declarations: 	VAR declList SEMICOL
 		| VAR declList error  {ourError("declerations list should end with ';'");}
 		| error  {ourError("declerations list should start with 'var' ");}
 ;
-declList: 	declList COMA ID COLON type
+declList: 	declList COMA ID COLON type {addToList($3);}
 		| declList COMA ID error  {ourError("between variable ID name and type should come ':'");}
 		| declList COMA error  {ourError("invalid variable id name");}
 		| declList error  {ourError("variables should be split by ','");}
-		| ID {ourError("between variable ID name and type should come ':'");}
-		| error  {ourError("invalid variable id name");}
+		| ID COLON type {addToList($1);}
+		| ID error {ourError("between variable ID name and type should come ':'");}
+		| error {ourError("invalid variable id name");}
 ;
-type:	INT
-	|  REAL
+type:	INT {$$ = $<op>1;}
+	|  REAL {$$ = $<op>1;}
 	| error  {ourError("Type should be 'int' or 'real'");}
 ;
 stmtList: 	statement SEMICOL stmtList
 		| statement error {ourError("';' is missing");}
 		| /* empty string */
 ;
-statement: 	ID ASSIGNOP expression {assign($1, $3)}
+statement: 	ID ASSIGNOP expression {assign($1, $3);}
 		| ID error {ourError("invalid assign operator");}
-		| PUT expression {put($2)}
-		| GET ID {get($2)}
+		| PUT expression {put($2);}
+		| GET ID {get($2);}
 		| GET error {ourError("invalid ID name");}
 		| IF boolExp THEN stmtList ELSE stmtList ENDI
 		| IF boolExp THEN stmtList ELSE stmtList error {ourError("invalid if statement, should end with 'ENDI'");}
@@ -107,24 +115,23 @@ statement: 	ID ASSIGNOP expression {assign($1, $3)}
 		| DO stmtList UNTIL boolExp ENDL
 		| DO stmtList UNTIL boolExp error {ourError("invalid do statement, should end with 'ENDL'");}
 		| DO stmtList error {ourError("invalid do statement, missing 'UNTIL'");}
-		| error {ourError("invalid statement\n");}
 ;
-boolExp: expression RELOP expression {$$=relop($1,$2,$3);}
-	| expression LOGOP expression {$$=logop($1,$2,$3);}
+boolExp: expression RELOP expression {$$ = relop($1,$<op>2,$3);}
+	| expression LOGOP expression {$$ = logop($1,$<op>2,$3);}
+	| expression error {ourError("invalid boolExp");}
 ;
 
-expression: 	expression ADDOP term {$$ = addop($1,$2,$3);}
-		|  term {$$ = $1;}
+expression: 	expression ADDOP term {$$ = addop($1,$<op>2,$3);}
+		| term {$$ = $1;}
 ;
-term: 	term MULOP factor {$$ = mulop($1,$2,$3);}
+term: 	term MULOP factor {$$ = mulop($1,$<op>2,$3);}
 	| factor {$$ = $1;}
 ;
-factor: ID {$$ = getId($1); }
-	| error { ourError("invalid id");}
+factor: ID {Node* temp = find(getId($1)); $$ = temp? temp.val:ourError("invalid ID name"); }
 	|  NUMBER { $$ = getNumber($1); }
-	| error { ourError("invalid number");}
 	|  '('expression')' {$$ = $2;}
 	| '('expression error { ourError("missing ')'");}
+	| error { ourError("invalid factor");}
 ;
 
 %%

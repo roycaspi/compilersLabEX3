@@ -2,6 +2,7 @@ typedef union {
     _ID id;
     _NUM num;
     char op[6];
+    bool boolean;
 } YYSTYPE;
 #define	DOT	258
 #define	COMA	259
