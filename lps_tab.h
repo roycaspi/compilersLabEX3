@@ -1,4 +1,4 @@
-typedef union{
+typedef union {
     _ID id;
     _NUM num;
     char op[6];

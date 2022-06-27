@@ -4,6 +4,8 @@
 #include <string.h>
 #include <malloc.h>
 
+logop(YYSTYPE val1, char* op, YYSTYPE val2);
+relop(YYSTYPE val1, char* op, YYSTYPE val2);
 _ID getId(char* id);
 _NUM getNumber(char* num);
 void addToList(char *newID);
@@ -27,17 +29,9 @@ typedef struct {
 	char val[20];
 } _ID
 typedef struct {
-	char* type = "INT";
-	int val;
-} _INT;
-typedef struct {
-	char* type = "REAL";
-	float val;
-} _REAL;
-union {
 	char type[4];
-	_INT integerVal;
-	_REAL floatVal;
+	int integerVal;
+	float floatVal;
 }_NUM;
 typedef struct {
     _ID id;
@@ -62,66 +56,75 @@ Node* head = NULL;
 %left ADDOP MULOP
 %right ASSIGNOP LOGOP
 
-%type <op> boolExp statement expression term factor type
+%type <op> boolExp statement expression term factor type //todo:fix
 
 %%
-program: programStart declarations START error {ourError("'Start' is missing after variable declarations ");} stmtList ENDP error {ourError("Endp is missing after after statements ");} fixDotIssue {return 0;}
+program: programStart declarations START stmtList ENDP fixDotIssue {return 0;}
+	| programStart declarations START stmtList error {ourError("'Endp' is missing after statements ");}
+	| programStart declarations error {ourError("'Start' is missing after variable declarations ");}
 	| error {ourError("Error in program");}
 ;
 fixDotIssue:  DOT
              | error {ourError(". is missing after ENDP");}
 ;
-programStart: PROG ID SEMICOL
-	| error  {ourError("Program should start with prog ID ;");}
+programStart: 	PROG ID SEMICOL
+		| PROG ID error  {ourError("Program should end with ';'");}
+		| PROG error  {ourError("invalid program ID name");}
+		| error  {ourError("Program should start with prog");}
 ;
-declarations: VAR declList SEMICOL
-	| error  {ourError("Declerations list should start with 'var' and end with ';'");}
+declarations: 	VAR declList SEMICOL
+		| VAR declList error  {ourError("declerations list should end with ';'");}
+		| error  {ourError("declerations list should start with 'var' ");}
 ;
-declList: declList COMA ID COLON type
-			| ID COLON type
-	| error  {ourError("Each declaration should be in format ID:Type (seperated with ',')");}
+declList: 	declList COMA ID COLON type
+		| declList COMA ID error  {ourError("between variable ID name and type should come ':'");}
+		| declList COMA error  {ourError("invalid variable id name");}
+		| declList error  {ourError("variables should be split by ','");}
+		| ID {ourError("between variable ID name and type should come ':'");}
+		| error  {ourError("invalid variable id name");}
 ;
-type:  INT  
-	|  REAL 
+type:	INT
+	|  REAL
 	| error  {ourError("Type should be 'int' or 'real'");}
 ;
-stmtList: statement SEMICOL | error {ourError("';' is missing");} stmtList
-			| /* empty string */
-			| error {ourError("stmtList is invalid, each statment must end with ';' ");}
+stmtList: 	statement SEMICOL stmtList
+		| statement error {ourError("';' is missing");}
+		| /* empty string */
 ;
-statement: ID ASSIGNOP expression {assign($1, $3)}
-			| PUT expression {put($2)}
-			| GET ID {get($2)}
-			| IF boolExp THEN stmtList ELSE stmtList ENDI
-			| IF boolExp THEN stmtList  ENDI
-			| LOOP boolExp DO stmtList ENDL
-			| DO stmtList UNTIL boolExp ENDL
-			| error {ourError("invalid statement\n");}
+statement: 	ID ASSIGNOP expression {assign($1, $3)}
+		| ID error {ourError("invalid assign operator");}
+		| PUT expression {put($2)}
+		| GET ID {get($2)}
+		| GET error {ourError("invalid ID name");}
+		| IF boolExp THEN stmtList ELSE stmtList ENDI
+		| IF boolExp THEN stmtList ELSE stmtList error {ourError("invalid if statement, should end with 'ENDI'");}
+		| IF boolExp THEN stmtList ENDI
+		| IF boolExp THEN stmtList error {ourError("invalid if statement, should end with 'ENDI'");}
+		| IF boolExp error {ourError("invalid if statement, bolean expression should end with 'THEN'");}
+		| LOOP boolExp DO stmtList ENDL
+		| LOOP boolExp DO stmtList error {ourError("invalid loop statement, should end with 'ENDL'");}
+		| LOOP boolExp error {ourError("invalid loop statement, bolean expression should end with 'DO'");}
+		| DO stmtList UNTIL boolExp ENDL
+		| DO stmtList UNTIL boolExp error {ourError("invalid do statement, should end with 'ENDL'");}
+		| DO stmtList error {ourError("invalid do statement, missing 'UNTIL'");}
+		| error {ourError("invalid statement\n");}
 ;
-boolExp: expression case expression
-	| expression '<' expression {$$ = $1 < $3;}
-	| expression '>' expression {$$ = $1 < $3;}
-	| expression '<>' expression {$$ = $1 != $3;}
-	| expression '&' expression {$$ = $1 && $3;}
-	| expression '~' expression {$$ = $1 == $3;} //don't understand what ~ means
-	| expression '!' expression {$$ = $1 || $3;}
+boolExp: expression RELOP expression {$$=relop($1,$2,$3);}
+	| expression LOGOP expression {$$=logop($1,$2,$3);}
 ;
-case: RELOP 
-	| LOGOP
+
+expression: 	expression ADDOP term {$$ = addop($1,$2,$3);}
+		|  term {$$ = $1;}
 ;
-expression: 	expression '+' term {$$ = $1 + $3;}
-		|  expression '-' term {$$ = $1 - $3;}
-		|  term
-;
-term: 	term '*' factor {$$ = $1 * $3;}
- 	| term '/' factor {$$ = $1 / $3}
- 	| term 'mod' factor {$$ = $1 % $3}
-	| factor {$$ = $2;}
+term: 	term MULOP factor {$$ = mulop($1,$2,$3);}
+	| factor {$$ = $1;}
 ;
 factor: ID {$$ = getId($1); }
-		|  NUMBER { $$ = getNumber($1); }
+	| error { ourError("invalid id");}
+	|  NUMBER { $$ = getNumber($1); }
+	| error { ourError("invalid number");}
 	|  '('expression')' {$$ = $2;}
-	| error                 { ourError("");}
+	| '('expression error { ourError("missing ')'");}
 ;
 
 %%
@@ -190,7 +193,7 @@ _NUM getNumber(char* num) {
 
 _ID getId(char* id) {
 	_ID newId;
-	id.length = strlen(id);
+	newId.length = strlen(id);
 	newId.val = id;
 	return newId;
 }
@@ -208,7 +211,7 @@ void addToList(char *newID) {
 bool updateListInt(char *existingID, int val) { //returns false if id doesn't exist in list
     Node* curr = head;
     while (curr != NULL) {
-    	if(strcmp(curr->id.val, existingID) {
+    	if(!(strcmp(curr->id.val, existingID)) {
     		curr->val.integerVal = val;
     	}
         curr = curr->next
@@ -252,7 +255,7 @@ void put(char* id){
 		ourError("%s does not exist", id)};
 	}
 	else{
-		(strcmp(temp->val.type, "INT"))?print("%d", temp->integerVal.val): print("%d", temp->floatVal.val);
+		(!strcmp(temp->val.type, "INT"))?print("%d", temp->integerVal.val): print("%d", temp->floatVal.val);
 	}
 }
 void get(char* id){
@@ -261,7 +264,7 @@ void get(char* id){
 		ourError("%s does not exist", id)};
 	}
 	else{
-		strcmp(temp->type == "INT")? temp->val.integerVal = 1: temp->val.floatVal = 1.0;
+		((!strcmp(temp->type, "INT")))? temp->val.integerVal = 1: temp->val.floatVal = 1.0;
 	}
 }
 void assign(char* id, char* exp){
@@ -276,6 +279,51 @@ void assign(char* id, char* exp){
 			ourError("%s already exists, id")
 		}
 	}
+}
+bool relop(char* val1, char* op, char* val2) {
+	float num1 = isInteger(val1)? (float)atoi(val1):atof(val1);
+	float num2 = isInteger(val2)? (float)atoi(val2):atof(val2);
+	if(!strcmp(op, '='){
+		return (num1 == num2);
+	}
+	else if(!strcmp(op, "<>"){
+		return (num1 != num2);
+	}
+	else if(!strcmp(op, '>'){
+		return (num1 > num2);
+	}
+	else if(!strcmp(op, '<'){
+		return (num1 < num2);
+	}
+}
+bool logop(char* val1, char* op, char* val2) {
+	float num1 = isInteger(val1)? (float)atoi(val1):atof(val1);
+	float num2 = isInteger(val2)? (float)atoi(val2):atof(val2);
+	if(!strcmp(op, '&'){
+		return (num1 && num2);
+	}
+	else if(!strcmp(op, '~'){
+		return !(num1 && num2);
+	}
+	else if(!strcmp(op, '!'){
+		return (num1 || num2);
+	}
+}
+_NUM addop(char* val1, char* op, char* val2) {
+	_NUM result;
+	float num1 = atof(val1);
+	float num2 = atof(val2);
+	result.type = "REAL";
+	result.floatVal = (!strcmp(op, '+'))? num1 + num2: num1 - num2;
+	return result;
+}
+_NUM mulop(char* val1, char* op, char* val2) {
+	_NUM result;
+	float num1 = atof(val1);
+	float num2 = atof(val2);
+	result.type = "REAL";
+	result.floatVal = (!strcmp(op, '*'))? num1 * num2: (!strcmp(op, '/'))?num1 / num2: num1 % num2;
+	return result;
 }
 
 
