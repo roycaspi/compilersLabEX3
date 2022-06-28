@@ -48,8 +48,24 @@
 #include <malloc.h>
 #include <stdbool.h>
 
-logop(YYSTYPE val1, char* op, YYSTYPE val2);
-relop(YYSTYPE val1, char* op, YYSTYPE val2);
+typedef struct {
+	int length;
+	char val[20];
+} _ID;
+typedef struct {
+	char type[4];
+	int integerVal;
+	float floatVal;
+}_NUM;
+typedef struct {
+    _ID id;
+    _NUM val;
+    struct Node* next;
+}Node;
+
+Node* head = NULL;
+logop(char* val1, char* op, char* val2);
+relop(char* val1, char* op, char* val2);
 _ID getId(char* id);
 _NUM getNumber(char* num);
 void addToList(char *newID);
@@ -68,24 +84,9 @@ extern FILE *yyin;
 extern FILE *yyout;
 extern int lines;
 extern char *yytext;
-typedef struct {
-	int length;
-	char val[20];
-} _ID
-typedef struct {
-	char type[4];
-	int integerVal;
-	float floatVal;
-}_NUM;
-typedef struct {
-    _ID id;
-    _NUM val;
-    struct Node* next;
-}Node;
 
-Node* head = NULL;
 
-#line 46 "lps.y"
+#line 47 "lps.y"
 typedef union {
     _ID id;
     _NUM num;
@@ -161,11 +162,10 @@ static const char yytranslate[] = {     0,
 #if YYDEBUG != 0
 static const short yyprhs[] = {     0,
      0,     9,    18,    26,    32,    36,    39,    41,    45,    49,
-    51,    57,    62,    66,    69,    73,    76,    78,    80,    82,
-    84,    88,    91,    92,    96,    99,   102,   105,   108,   116,
-   124,   130,   136,   140,   146,   152,   156,   162,   168,   172,
-   176,   180,   183,   187,   189,   193,   195,   197,   199,   203,
-   207
+    51,    57,    62,    66,    70,    73,    75,    77,    79,    81,
+    85,    88,    89,    93,    96,    99,   102,   105,   113,   121,
+   127,   133,   137,   143,   149,   153,   159,   165,   169,   173,
+   177,   180,   184,   186,   190,   192,   194,   196,   200,   204
 };
 
 static const short yyrhs[] = {    19,
@@ -175,33 +175,32 @@ static const short yyrhs[] = {    19,
      0,    19,    28,     1,     0,    19,     1,     0,     1,     0,
     24,    42,     8,     0,    24,    42,     1,     0,     1,     0,
     42,     4,    28,     7,    43,     0,    42,     4,    28,     1,
-     0,    42,     4,     1,     0,    42,     1,     0,    28,     7,
-    43,     0,    28,     1,     0,     1,     0,    15,     0,    21,
-     0,     1,     0,    45,     8,    44,     0,    45,     1,     0,
-     0,    28,    36,    47,     0,    28,     1,     0,    18,    47,
-     0,    20,    28,     0,    20,     1,     0,    11,    46,    23,
-    44,    12,    44,    16,     0,    11,    46,    23,    44,    12,
-    44,     1,     0,    11,    46,    23,    44,    16,     0,    11,
-    46,    23,    44,     1,     0,    11,    46,     1,     0,    22,
-    46,    14,    44,    25,     0,    22,    46,    14,    44,     1,
-     0,    22,    46,     1,     0,    14,    44,    26,    46,    25,
-     0,    14,    44,    26,    46,     1,     0,    14,    44,     1,
-     0,    47,    29,    47,     0,    47,    37,    47,     0,    47,
-     1,     0,    47,    34,    48,     0,    48,     0,    48,    35,
-    49,     0,    49,     0,    28,     0,    27,     0,    38,    47,
-    39,     0,    38,    47,     1,     0,     1,     0
+     0,    42,     4,     1,     0,    28,     7,    43,     0,    28,
+     1,     0,     1,     0,    15,     0,    21,     0,     1,     0,
+    45,     8,    44,     0,    45,     1,     0,     0,    28,    36,
+    47,     0,    28,     1,     0,    18,    47,     0,    20,    28,
+     0,    20,     1,     0,    11,    46,    23,    44,    12,    44,
+    16,     0,    11,    46,    23,    44,    12,    44,     1,     0,
+    11,    46,    23,    44,    16,     0,    11,    46,    23,    44,
+     1,     0,    11,    46,     1,     0,    22,    46,    14,    44,
+    25,     0,    22,    46,    14,    44,     1,     0,    22,    46,
+     1,     0,    14,    44,    26,    46,    25,     0,    14,    44,
+    26,    46,     1,     0,    14,    44,     1,     0,    47,    29,
+    47,     0,    47,    37,    47,     0,    47,     1,     0,    47,
+    34,    48,     0,    48,     0,    48,    35,    49,     0,    49,
+     0,    28,     0,    27,     0,    38,    47,    39,     0,    38,
+    47,     1,     0,     1,     0
 };
 
 #endif
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-    66,    67,    68,    69,    70,    71,    72,    82,    83,    84,
-    86,    87,    88,    89,    90,    91,    92,    94,    95,    96,
-    98,    99,   100,   102,   103,   104,   105,   106,   107,   108,
-   109,   110,   111,   112,   113,   114,   115,   116,   117,   119,
-   120,   121,   124,   125,   127,   128,   130,   131,   132,   133,
-   134
+    67,    68,    69,    70,    71,    72,    73,    83,    84,    85,
+    87,    88,    89,    91,    92,    93,    95,    96,    97,    99,
+   100,   101,   103,   104,   105,   106,   107,   108,   109,   110,
+   111,   112,   113,   114,   115,   116,   117,   118,   120,   121,
+   122,   125,   126,   128,   129,   131,   132,   133,   134,   135
 };
 
 static const char * const yytname[] = {   "$","error","$undefined.","DOT","COMA",
@@ -215,32 +214,30 @@ static const char * const yytname[] = {   "$","error","$undefined.","DOT","COMA"
 
 static const short yyr1[] = {     0,
     40,    40,    40,    40,    40,    40,    40,    41,    41,    41,
-    42,    42,    42,    42,    42,    42,    42,    43,    43,    43,
-    44,    44,    44,    45,    45,    45,    45,    45,    45,    45,
-    45,    45,    45,    45,    45,    45,    45,    45,    45,    46,
-    46,    46,    47,    47,    48,    48,    49,    49,    49,    49,
-    49
+    42,    42,    42,    42,    42,    42,    43,    43,    43,    44,
+    44,    44,    45,    45,    45,    45,    45,    45,    45,    45,
+    45,    45,    45,    45,    45,    45,    45,    45,    46,    46,
+    46,    47,    47,    48,    48,    49,    49,    49,    49,    49
 };
 
 static const short yyr2[] = {     0,
      8,     8,     7,     5,     3,     2,     1,     3,     3,     1,
-     5,     4,     3,     2,     3,     2,     1,     1,     1,     1,
-     3,     2,     0,     3,     2,     2,     2,     2,     7,     7,
-     5,     5,     3,     5,     5,     3,     5,     5,     3,     3,
-     3,     2,     3,     1,     3,     1,     1,     1,     3,     3,
-     1
+     5,     4,     3,     3,     2,     1,     1,     1,     1,     3,
+     2,     0,     3,     2,     2,     2,     2,     7,     7,     5,
+     5,     3,     5,     5,     3,     5,     5,     3,     3,     3,
+     2,     3,     1,     3,     1,     1,     1,     3,     3,     1
 };
 
 static const short yydefact[] = {     0,
-     7,     0,     6,     0,     5,     0,    10,     0,     0,    17,
-     0,     0,     4,    23,    16,     0,     9,     0,     8,     0,
-    23,     0,     0,     0,     0,     0,     0,    20,    18,    19,
-    15,    13,     0,    51,    48,    47,     0,     0,     0,    44,
-    46,     0,    26,    28,    27,     0,    25,     0,     3,     0,
-    22,    23,    12,     0,     0,    33,    23,    42,     0,     0,
-     0,     0,    39,     0,    36,    23,    24,     2,     1,    21,
-    11,    50,    49,     0,    40,    43,    41,    45,     0,     0,
-    32,    23,    31,    38,    37,    35,    34,     0,    30,    29,
+     7,     0,     6,     0,     5,     0,    10,     0,     0,    16,
+     0,     0,     4,    22,    15,     0,     9,     0,     8,     0,
+    22,     0,     0,     0,     0,     0,     0,    19,    17,    18,
+    14,    13,     0,    50,    47,    46,     0,     0,     0,    43,
+    45,     0,    25,    27,    26,     0,    24,     0,     3,     0,
+    21,    22,    12,     0,     0,    32,    22,    41,     0,     0,
+     0,     0,    38,     0,    35,    22,    23,     2,     1,    20,
+    11,    49,    48,     0,    39,    42,    40,    44,     0,     0,
+    31,    22,    30,    37,    36,    34,    33,     0,    29,    28,
      0,     0,     0
 };
 
@@ -250,7 +247,7 @@ static const short yydefgoto[] = {    91,
 
 static const short yypact[] = {    53,
 -32768,     7,-32768,    67,-32768,     8,-32768,    11,    10,-32768,
-    56,    12,-32768,    42,-32768,    50,    73,    20,-32768,     6,
+    56,    12,-32768,    42,-32768,    50,-32768,    20,-32768,     6,
     42,     6,    21,     6,     1,     9,    75,-32768,-32768,-32768,
 -32768,-32768,    77,-32768,-32768,-32768,     6,    23,    18,    31,
 -32768,    24,    33,-32768,-32768,    13,-32768,     6,-32768,    14,
@@ -262,11 +259,11 @@ static const short yypact[] = {    53,
 };
 
 static const short yypgoto[] = {-32768,
--32768,-32768,    28,   -21,-32768,   -23,   -19,    25,    26
+-32768,-32768,    27,   -21,-32768,   -23,   -19,    17,    25
 };
 
 
-#define	YYLAST		88
+#define	YYLAST		87
 
 
 static const short yytable[] = {    42,
@@ -277,8 +274,8 @@ static const short yytable[] = {    42,
     79,    77,    73,    37,    80,    57,    59,    33,    45,    64,
     28,    60,    20,     1,    61,    21,    15,    81,    89,    22,
     88,    23,    16,    24,    29,    62,    60,     5,    82,    25,
-    30,     2,    83,    90,     6,    51,   -14,    53,    92,    93,
-   -14,    71,    52,    54,    76,     0,     0,    78
+    30,     2,    83,    90,     6,    51,    76,    53,    92,    93,
+    71,     0,    52,    54,     0,     0,    78
 };
 
 static const short yycheck[] = {    21,
@@ -289,8 +286,8 @@ static const short yycheck[] = {    21,
     64,    61,    39,    38,    66,    23,    29,    28,    28,    26,
      1,    34,    11,     1,    37,    14,     1,     1,     1,    18,
     82,    20,     7,    22,    15,    35,    34,     1,    12,    28,
-    21,    19,    16,    16,     8,     1,     4,     1,     0,     0,
-     8,    54,     8,     7,    60,    -1,    -1,    62
+    21,    19,    16,    16,     8,     1,    60,     1,     0,     0,
+    54,    -1,     8,     7,    -1,    -1,    62
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
 #line 3 "bison.simple"
@@ -785,179 +782,175 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 66 "lps.y"
+#line 67 "lps.y"
 {return 0;;
     break;}
 case 2:
-#line 67 "lps.y"
+#line 68 "lps.y"
 {ourError(". is missing after ENDP");;
     break;}
 case 3:
-#line 68 "lps.y"
+#line 69 "lps.y"
 {ourError("'Endp' is missing after statements ");;
     break;}
 case 4:
-#line 69 "lps.y"
+#line 70 "lps.y"
 {ourError("'Start' is missing after variable declarations ");;
     break;}
 case 5:
-#line 70 "lps.y"
+#line 71 "lps.y"
 {ourError("Program should end with ';'");;
     break;}
 case 6:
-#line 71 "lps.y"
+#line 72 "lps.y"
 {ourError("invalid program ID name");;
     break;}
 case 7:
-#line 72 "lps.y"
+#line 73 "lps.y"
 {ourError("Program should start with prog");;
     break;}
 case 9:
-#line 83 "lps.y"
+#line 84 "lps.y"
 {ourError("declerations list should end with ';'");;
     break;}
 case 10:
-#line 84 "lps.y"
+#line 85 "lps.y"
 {ourError("declerations list should start with 'var' ");;
     break;}
 case 11:
-#line 86 "lps.y"
+#line 87 "lps.y"
 {addToList(yyvsp[-2].id);;
     break;}
 case 12:
-#line 87 "lps.y"
+#line 88 "lps.y"
 {ourError("between variable ID name and type should come ':'");;
     break;}
 case 13:
-#line 88 "lps.y"
+#line 89 "lps.y"
 {ourError("invalid variable id name");;
     break;}
 case 14:
-#line 89 "lps.y"
-{ourError("variables should be split by ','");;
-    break;}
-case 15:
-#line 90 "lps.y"
+#line 91 "lps.y"
 {addToList(yyvsp[-2].id);;
     break;}
-case 16:
-#line 91 "lps.y"
+case 15:
+#line 92 "lps.y"
 {ourError("between variable ID name and type should come ':'");;
     break;}
-case 17:
-#line 92 "lps.y"
+case 16:
+#line 93 "lps.y"
 {ourError("invalid variable id name");;
     break;}
-case 18:
-#line 94 "lps.y"
-{yyval.op = yyvsp[0].op;;
-    break;}
-case 19:
+case 17:
 #line 95 "lps.y"
 {yyval.op = yyvsp[0].op;;
     break;}
-case 20:
+case 18:
 #line 96 "lps.y"
+{yyval.op = yyvsp[0].op;;
+    break;}
+case 19:
+#line 97 "lps.y"
 {ourError("Type should be 'int' or 'real'");;
     break;}
-case 22:
-#line 99 "lps.y"
+case 21:
+#line 100 "lps.y"
 {ourError("';' is missing");;
     break;}
-case 24:
-#line 102 "lps.y"
+case 23:
+#line 103 "lps.y"
 {assign(yyvsp[-2].id, yyvsp[0].num);;
     break;}
-case 25:
-#line 103 "lps.y"
+case 24:
+#line 104 "lps.y"
 {ourError("invalid assign operator");;
     break;}
-case 26:
-#line 104 "lps.y"
+case 25:
+#line 105 "lps.y"
 {put(yyvsp[0].num);;
     break;}
-case 27:
-#line 105 "lps.y"
+case 26:
+#line 106 "lps.y"
 {get(yyvsp[0].id);;
     break;}
-case 28:
-#line 106 "lps.y"
+case 27:
+#line 107 "lps.y"
 {ourError("invalid ID name");;
     break;}
-case 30:
-#line 108 "lps.y"
+case 29:
+#line 109 "lps.y"
+{ourError("invalid if statement, should end with 'ENDI'");;
+    break;}
+case 31:
+#line 111 "lps.y"
 {ourError("invalid if statement, should end with 'ENDI'");;
     break;}
 case 32:
-#line 110 "lps.y"
-{ourError("invalid if statement, should end with 'ENDI'");;
-    break;}
-case 33:
-#line 111 "lps.y"
+#line 112 "lps.y"
 {ourError("invalid if statement, bolean expression should end with 'THEN'");;
     break;}
-case 35:
-#line 113 "lps.y"
+case 34:
+#line 114 "lps.y"
 {ourError("invalid loop statement, should end with 'ENDL'");;
     break;}
-case 36:
-#line 114 "lps.y"
+case 35:
+#line 115 "lps.y"
 {ourError("invalid loop statement, bolean expression should end with 'DO'");;
     break;}
-case 38:
-#line 116 "lps.y"
+case 37:
+#line 117 "lps.y"
 {ourError("invalid do statement, should end with 'ENDL'");;
     break;}
-case 39:
-#line 117 "lps.y"
+case 38:
+#line 118 "lps.y"
 {ourError("invalid do statement, missing 'UNTIL'");;
     break;}
-case 40:
-#line 119 "lps.y"
+case 39:
+#line 120 "lps.y"
 {yyval.boolean = relop(yyvsp[-2].num,yyvsp[-1].op,yyvsp[0].num);;
     break;}
-case 41:
-#line 120 "lps.y"
+case 40:
+#line 121 "lps.y"
 {yyval.boolean = logop(yyvsp[-2].num,yyvsp[-1].op,yyvsp[0].num);;
     break;}
-case 42:
-#line 121 "lps.y"
+case 41:
+#line 122 "lps.y"
 {ourError("invalid boolExp");;
     break;}
-case 43:
-#line 124 "lps.y"
+case 42:
+#line 125 "lps.y"
 {yyval.num = addop(yyvsp[-2].num,yyvsp[-1].op,yyvsp[0].num);;
     break;}
-case 44:
-#line 125 "lps.y"
+case 43:
+#line 126 "lps.y"
 {yyval.num = yyvsp[0].num;;
     break;}
-case 45:
-#line 127 "lps.y"
+case 44:
+#line 128 "lps.y"
 {yyval.num = mulop(yyvsp[-2].num,yyvsp[-1].op,yyvsp[0].num);;
     break;}
-case 46:
-#line 128 "lps.y"
+case 45:
+#line 129 "lps.y"
 {yyval.num = yyvsp[0].num;;
     break;}
-case 47:
-#line 130 "lps.y"
+case 46:
+#line 131 "lps.y"
 {Node* temp = find(getId(yyvsp[0].id)); yyval.num = temp? temp.val:ourError("invalid ID name"); ;
     break;}
-case 48:
-#line 131 "lps.y"
+case 47:
+#line 132 "lps.y"
 { yyval.num = getNumber(yyvsp[0].num); ;
     break;}
-case 49:
-#line 132 "lps.y"
+case 48:
+#line 133 "lps.y"
 {yyval.num = yyvsp[-1].num;;
     break;}
-case 50:
-#line 133 "lps.y"
+case 49:
+#line 134 "lps.y"
 { ourError("missing ')'");;
     break;}
-case 51:
-#line 134 "lps.y"
+case 50:
+#line 135 "lps.y"
 { ourError("invalid factor");;
     break;}
 }
@@ -1159,7 +1152,7 @@ yyerrhandle:
   goto yynewstate;
 }
 
-#line 137 "lps.y"
+#line 138 "lps.y"
 
 int yyerror(char *errorMsg) {
 	fprintf(yyout, "%s\n", errorMsg);
@@ -1316,16 +1309,16 @@ void assign(char* id, char* exp){
 bool relop(char* val1, char* op, char* val2) {
 	float num1 = isInteger(val1)? (float)atoi(val1):atof(val1);
 	float num2 = isInteger(val2)? (float)atoi(val2):atof(val2);
-	if(!strcmp(op, '='){
+	if(!strcmp(op, '=')){
 		return (num1 == num2);
 	}
-	else if(!strcmp(op, "<>"){
+	else if(!strcmp(op, "<>")){
 		return (num1 != num2);
 	}
-	else if(!strcmp(op, '>'){
+	else if(!strcmp(op, '>')){
 		return (num1 > num2);
 	}
-	else if(!strcmp(op, '<'){
+	else if(!strcmp(op, '<')){
 		return (num1 < num2);
 	}
 }

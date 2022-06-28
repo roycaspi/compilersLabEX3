@@ -5,8 +5,24 @@
 #include <malloc.h>
 #include <stdbool.h>
 
-logop(YYSTYPE val1, char* op, YYSTYPE val2);
-relop(YYSTYPE val1, char* op, YYSTYPE val2);
+typedef struct {
+	int length;
+	char val[20];
+} _ID;
+typedef struct {
+	char type[4];
+	int integerVal;
+	float floatVal;
+}_NUM;
+typedef struct {
+    _ID id;
+    _NUM val;
+    struct Node* next;
+}Node;
+
+Node* head = NULL;
+logop(char* val1, char* op, char* val2);
+relop(char* val1, char* op, char* val2);
 _ID getId(char* id);
 _NUM getNumber(char* num);
 void addToList(char *newID);
@@ -25,22 +41,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 extern int lines;
 extern char *yytext;
-typedef struct {
-	int length;
-	char val[20];
-} _ID
-typedef struct {
-	char type[4];
-	int integerVal;
-	float floatVal;
-}_NUM;
-typedef struct {
-    _ID id;
-    _NUM val;
-    struct Node* next;
-}Node;
 
-Node* head = NULL;
 %}
 
 %union {
@@ -86,7 +87,7 @@ declarations: 	VAR declList SEMICOL
 declList: 	declList COMA ID COLON type {addToList($3);}
 		| declList COMA ID error  {ourError("between variable ID name and type should come ':'");}
 		| declList COMA error  {ourError("invalid variable id name");}
-		| declList error  {ourError("variables should be split by ','");}
+//		| declList error  {ourError("variables should be split by ','");}
 		| ID COLON type {addToList($1);}
 		| ID error {ourError("between variable ID name and type should come ':'");}
 		| error {ourError("invalid variable id name");}
@@ -290,16 +291,16 @@ void assign(char* id, char* exp){
 bool relop(char* val1, char* op, char* val2) {
 	float num1 = isInteger(val1)? (float)atoi(val1):atof(val1);
 	float num2 = isInteger(val2)? (float)atoi(val2):atof(val2);
-	if(!strcmp(op, '='){
+	if(!strcmp(op, '=')){
 		return (num1 == num2);
 	}
-	else if(!strcmp(op, "<>"){
+	else if(!strcmp(op, "<>")){
 		return (num1 != num2);
 	}
-	else if(!strcmp(op, '>'){
+	else if(!strcmp(op, '>')){
 		return (num1 > num2);
 	}
-	else if(!strcmp(op, '<'){
+	else if(!strcmp(op, '<')){
 		return (num1 < num2);
 	}
 }
